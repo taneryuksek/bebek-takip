@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Bebek Menü & Ek Gıda Takip</title>
+  
+  <!-- PWA & Mobil Uyumluluk Etiketleri -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Bebek Takip">
+  <meta name="theme-color" content="#2E7D32">
+  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3050/3050158.png">
+
+  <!-- Tailwind CSS (Tasarım için) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { -webkit-tap-highlight-color: transparent; }
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+  </style>
+</head>
+<body class="bg-gray-100 font-sans pb-20 select-none">
+
+  <!-- ÜST BAŞLIK -->
+  <header class="bg-white border-b border-gray-200 sticky top-0 z-20 px-4 py-3 flex justify-between items-center shadow-sm">
+    <h1 id="headerTitle" class="text-base font-bold text-gray-800">🗓️ Bebek Beslenme Takvimi</h1>
+    <span id="headerDate" class="text-xs bg-green-100 text-green-800 font-bold px-2 py-1 rounded"></span>
+  </header>
+
+  <!-- 1. SEKME: TAKVİM EKRANI -->
+  <main id="tabTakvim" class="block">
+    <!-- Ay Değiştirici -->
+    <div class="bg-white px-4 py-2 border-b flex justify-between items-center">
+      <button onclick="oncekiAy()" class="p-2 text-gray-600 hover:text-green-700 text-xl font-bold">‹</button>
+      <h2 id="ayYilBaslik" class="text-base font-bold text-green-800"></h2>
+      <button onclick="sonrakiAy()" class="p-2 text-gray-600 hover:text-green-700 text-xl font-bold">›</button>
+    </div>
+
+    <!-- Gün İsimleri -->
+    <div class="grid grid-cols-7 bg-white text-center py-1 text-xs font-bold text-gray-500 border-b">
+      <div>Pzt</div><div>Sal</div><div>Çar</div><div>Per</div><div>Cum</div><div>Cmt</div><div>Paz</div>
+    </div>
+
+    <!-- Takvim Grid -->
+    <div id="takvimGrid" class="grid grid-cols-7 gap-1 p-1 bg-gray-200"></div>
+  </main>
+
+  <!-- 2. SEKME: GIDA LİSTESİ & CANLI TAKİP -->
+  <main id="tabGidalar" class="hidden p-3 space-y-3">
+    <!-- Canlı Hafta Bilgi Kartı -->
+    <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
+      <div class="flex items-center space-x-2 text-red-600 font-bold text-xs">
+        <span class="inline-block w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
+        <span>Canlı Takip: Bulunduğun Hafta</span>
+      </div>
+      <div id="haftaAraligiYazi" class="text-base font-extrabold text-green-800 mt-1"></div>
+      <p class="text-xs text-gray-500 mt-0.5">Takvime girdiğin tüm yemekler bu haftaya göre canlı taranır.</p>
+    </div>
+
+    <!-- Filtre Butonları -->
+    <div class="flex space-x-2">
+      <button onclick="filtrele(0)" id="fBtn0" class="flex-1 py-1.5 text-xs font-bold rounded-lg bg-green-700 text-white shadow-sm">Tümü</button>
+      <button onclick="filtrele(1)" id="fBtn1" class="flex-1 py-1.5 text-xs font-bold rounded-lg bg-gray-200 text-gray-700">✅ Verilen</button>
+      <button onclick="filtrele(2)" id="fBtn2" class="flex-1 py-1.5 text-xs font-bold rounded-lg bg-gray-200 text-gray-700">❌ Verilmeyen</button>
+    </div>
+
+    <!-- Gıdalar Listesi -->
+    <div id="gidaListesiAlani" class="space-y-2"></div>
+  </main>
+
+  <!-- DÜZENLEME MODAL (PENCERE) -->
+  <div id="editModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl p-5 space-y-3 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 id="modalBaslik" class="font-bold text-gray-800"></h3>
+        <button onclick="modalKapat()" class="text-gray-400 text-2xl leading-none">&times;</button>
+      </div>
+
+      <!-- Yeni Besin Bilgi Kutusu -->
+      <div id="modalYeniBesinAlani" class="hidden bg-purple-50 border border-purple-200 rounded-lg p-2.5 space-y-1">
+        <div class="text-xs font-bold text-purple-900 flex items-center gap-1">✨ Bu Gün İlk Kez Denenen Yeni Besinler:</div>
+        <div id="modalYeniBesinIcerik" class="text-xs text-purple-800"></div>
+      </div>
+
+      <!-- Öğün Girişleri -->
+      <div>
+        <label class="block text-xs font-bold text-gray-700 mb-1">🍳 Sabah Kahvaltısı</label>
+        <input type="text" id="inSabah" placeholder="Örn: Avokado, labne..." class="w-full text-sm border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-green-600 outline-none">
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-gray-700 mb-1">🥣 Öğle Yemeği</label>
+        <input type="text" id="inOglen" placeholder="Örn: Kabak püresi, kıyma..." class="w-full text-sm border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-green-600 outline-none">
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-gray-700 mb-1">🥑 Akşam Yemeği</label>
+        <input type="text" id="inAksam" placeholder="Örn: Ev yoğurdu, irmik..." class="w-full text-sm border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-green-600 outline-none">
+      </div>
+
+      <div class="pt-2 flex gap-2">
+        <button onclick="modalKapat()" class="flex-1 py-2 text-sm text-gray-600 bg-gray-100 rounded-lg font-bold">İptal</button>
+        <button onclick="menuyuKaydet()" class="flex-1 py-2 text-sm text-white bg-green-700 rounded-lg font-bold shadow-md hover:bg-green-800">💾 Kaydet</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ALT MENÜ (NAVBAR) -->
+  <nav class="fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 flex justify-around py-2 z-30">
+    <button onclick="sekmeDegistir(0)" id="navBtn0" class="flex flex-col items-center text-green-700 font-bold text-xs">
+      <span class="text-lg">🗓️</span>Takvim
+    </button>
+    <button onclick="sekmeDegistir(1)" id="navBtn1" class="flex flex-col items-center text-gray-400 font-bold text-xs">
+      <span class="text-lg">📋</span>Gıda Takibi
+    </button>
+  </nav>
+
+  <script>
+    const AY_ISIMLERI = ['', 'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+    const GUN_ISIMLERI = ['', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
+
+    let bugun = new Date();
+    let aktifAy = new Date(bugun.getFullYear(), bugun.month ? bugun.month : bugun.getMonth(), 1);
+    let seciliTarihKey = '';
+    let aktifFiltre = 0;
+
+    // LocalStorage ile Kalıcı Hafıza
+    let menuler = JSON.parse(localStorage.getItem('bebek_menuler') || '{}');
+    let gidaListesi = JSON.parse(localStorage.getItem('bebek_gida_listesi') || '["Havuç","Kabak","Avokado","Yumurta sarısı","Ev yoğurdu","Labne"]');
+
+    function kaydetLocal() {
+      localStorage.setItem('bebek_menuler', JSON.stringify(menuler));
+      localStorage.setItem('bebek_gida_listesi', JSON.stringify(gidaListesi));
+    }
+
+    function kucukHarf(str) {
+      return (str || '').trim().replace(/I/g, 'ı').replace(/İ/g, 'i').toLowerCase();
+    }
+
+    function gidalariAyir(str) {
+      if (!str) return [];
+      return str.split(/[,+/\n\-]/).map(s => s.trim()).filter(s => s.length >= 2);
+    }
+
+    // Bulunulan Haftanın Başı (Pazartesi) ve Sonu (Pazar)
+    function buHaftaninAraligi() {
+      const now = new Date(bugun);
+      const day = now.getDay() === 0 ? 7 : now.getDay();
+      const pzt = new Date(now);
+      pzt.setDate(now.getDate() - (day - 1));
+      const paz = new Date(pzt);
+      paz.setDate(pzt.getDate() + 6);
+      return { pzt, paz };
+    }
+
+    // BİR GÜNDE ÖĞÜN BAZINDA YENİ BESİNLERİ BULAN KRONOLOJİK MOTOR
+    function gununYeniBesinleri(hedefTarih) {
+      const hedefKey = `${hedefTarih.getFullYear()}-${hedefTarih.getMonth() + 1}-${hedefTarih.getDate()}`;
+      const menu = menuler[hedefKey];
+      if (!menu) return { sabah: [], oglen: [], aksam: [] };
+
+      const gecmisHavuz = new Set();
+
+      // Hedef günden ÖNCEKİ günleri havuza ekle
+      Object.keys(menuler).forEach(k => {
+        const [y, m, d] = k.split('-').map(Number);
+        const t = new Date(y, m - 1, d);
+        if (t < hedefTarih) {
+          const mObj = menuler[k];
+          [mObj.sabah, mObj.oglen, mObj.aksam].forEach(text => {
+            gidalariAyir(text).forEach(g => gecmisHavuz.add(kucukHarf(g)));
+          });
+        }
+      });
+
+      function kontrol(text) {
+        const yeniler = [];
+        gidalariAyir(text).forEach(g => {
+          const k = kucukHarf(g);
+          if (!gecmisHavuz.has(k)) {
+            let formatli = g.charAt(0).toLocaleUpperCase('tr-TR') + g.slice(1);
+            if (!yeniler.includes(formatli)) yeniler.push(formatli);
+            gecmisHavuz.add(k); // Artık havuza girdi!
+          }
+        });
+        return yeniler;
+      }
+
+      return {
+        sabah: kontrol(menu.sabah),
+        oglen: kontrol(menu.oglen),
+        aksam: kontrol(menu.aksam)
+      };
+    }
+
+    // TAKVİMİ ÇİZ
+    function takvimiCiz() {
+      const y = aktifAy.getFullYear();
+      const m = aktifAy.getMonth();
+      document.getElementById('ayYilBaslik').innerText = `${AY_ISIMLERI[m + 1]} ${y}`;
+      document.getElementById('headerDate').innerText = `Bugün: ${bugun.getDate()} ${AY_ISIMLERI[bugun.getMonth() + 1]}`;
+
+      const ilkGun = new Date(y, m, 1).getDay();
+      const bosluk = (ilkGun === 0 ? 7 : ilkGun) - 1;
+      const toplamGun = new Date(y, m + 1, 0).getDate();
+
+      const grid = document.getElementById('takvimGrid');
+      grid.innerHTML = '';
+
+      for (let i = 0; i < bosluk; i++) {
+        grid.innerHTML += `<div class="bg-gray-100 min-h-[90px] rounded"></div>`;
+      }
+
+      for (let g = 1; g <= toplamGun; g++) {
+        const buTarih = new Date(y, m, g);
+        const k = `${y}-${m + 1}-${g}`;
+        const menu = menuler[k];
+        const isBugun = bugun.getFullYear() === y && bugun.getMonth() === m && bugun.getDate() === g;
+        const yeniObj = gununYeniBesinleri(buTarih);
+
+        let icerikHtml = '';
+        if (menu) {
+          if (menu.sabah) icerikHtml += `<div class="bg-amber-100 text-amber-800 text-[9px] px-1 rounded truncate">S: ${menu.sabah}</div>`;
+          if (menu.oglen) icerikHtml += `<div class="bg-emerald-100 text-emerald-800 text-[9px] px-1 rounded truncate mt-0.5">Ö: ${menu.oglen}</div>`;
+          if (menu.aksam) icerikHtml += `<div class="bg-blue-100 text-blue-800 text-[9px] px-1 rounded truncate mt-0.5">A: ${menu.aksam}</div>`;
+        }
+
+        let yeniHtml = '';
+        if (yeniObj.sabah.length) yeniHtml += `<div class="bg-purple-100 text-purple-900 font-bold text-[8px] px-1 rounded truncate mt-0.5">✨ S: ${yeniObj.sabah.join(',')}</div>`;
+        if (yeniObj.oglen.length) yeniHtml += `<div class="bg-purple-100 text-purple-900 font-bold text-[8px] px-1 rounded truncate mt-0.5">✨ Ö: ${yeniObj.oglen.join(',')}</div>`;
+        if (yeniObj.aksam.length) yeniHtml += `<div class="bg-purple-100 text-purple-900 font-bold text-[8px] px-1 rounded truncate mt-0.5">✨ A: ${yeniObj.aksam.join(',')}</div>`;
+
+        grid.innerHTML += `
+          <div onclick="gunTikla(${y}, ${m + 1}, ${g})" class="bg-white min-h-[105px] p-1 rounded border ${isBugun ? 'border-2 border-green-600 bg-green-50/40' : 'border-gray-200'} flex flex-col justify-between cursor-pointer hover:shadow-md transition">
+            <div>
+              <div class="flex justify-between items-center mb-1">
+                <span class="text-xs font-bold ${isBugun ? 'text-green-700' : 'text-gray-800'}">${g}</span>
+                ${isBugun ? '<span class="text-[8px] bg-green-700 text-white font-bold px-1 rounded">Bugün</span>' : ''}
+              </div>
+              <div class="space-y-0.5">${icerikHtml}</div>
+            </div>
+            <div>${yeniHtml}</div>
+          </div>
+        `;
+      }
+    }
+
+    function oncekiAy() { aktifAy.setMonth(aktifAy.getMonth() - 1); takvimiCiz(); }
+    function sonrakiAy() { aktifAy.setMonth(aktifAy.getMonth() + 1); takvimiCiz(); }
+
+    // MODAL İŞLEMLERİ
+    function gunTikla(y, m, g) {
+      seciliTarihKey = `${y}-${m}-${g}`;
+      const menu = menuler[seciliTarihKey] || { sabah: '', oglen: '', aksam: '' };
+
+      document.getElementById('modalBaslik').innerText = `✍️ ${g} ${AY_ISIMLERI[m]} ${y} Menüsü`;
+      document.getElementById('inSabah').value = menu.sabah || '';
+      document.getElementById('inOglen').value = menu.oglen || '';
+      document.getElementById('inAksam').value = menu.aksam || '';
+
+      const yeniObj = gununYeniBesinleri(new Date(y, m - 1, g));
+      const yeniAlani = document.getElementById('modalYeniBesinAlani');
+      const icerik = document.getElementById('modalYeniBesinIcerik');
+
+      let metinler = [];
+      if (yeniObj.sabah.length) metinler.push(`<b>Sabah:</b> ${yeniObj.sabah.join(', ')}`);
+      if (yeniObj.oglen.length) metinler.push(`<b>Öğle:</b> ${yeniObj.oglen.join(', ')}`);
+      if (yeniObj.aksam.length) metinler.push(`<b>Akşam:</b> ${yeniObj.aksam.join(', ')}`);
+
+      if (metinler.length) {
+        icerik.innerHTML = metinler.join('<br>');
+        yeniAlani.classList.remove('hidden');
+      } else {
+        yeniAlani.classList.add('hidden');
+      }
+
+      document.getElementById('editModal').classList.remove('hidden');
+    }
+
+    function modalKapat() {
+      document.getElementById('editModal').classList.add('hidden');
+    }
+
+    function menuyuKaydet() {
+      const s = document.getElementById('inSabah').value.trim();
+      const o = document.getElementById('inOglen').value.trim();
+      const a = document.getElementById('inAksam').value.trim();
+
+      menuler[seciliTarihKey] = { sabah: s, oglen: o, aksam: a };
+
+      // Gıda listesine otomatik ekle
+      [s, o, a].forEach(text => {
+        gidalariAyir(text).forEach(g => {
+          const k = kucukHarf(g);
+          if (!gidaListesi.some(item => kucukHarf(item) === k)) {
+            const formatli = g.charAt(0).toLocaleUpperCase('tr-TR') + g.slice(1);
+            gidaListesi.unshift(formatli);
+          }
+        });
+      });
+
+      kaydetLocal();
+      modalKapat();
+      takvimiCiz();
+      gidaListesiniCiz();
+    }
+
+    // GIDA LİSTESİ & CANLI TAKİP
+    function gidaListesiniCiz() {
+      const { pzt, paz } = buHaftaninAraligi();
+      document.getElementById('haftaAraligiYazi').innerText = `📌 ${pzt.getDate()} ${AY_ISIMLERI[pzt.getMonth() + 1]} - ${paz.getDate()} ${AY_ISIMLERI[paz.getMonth() + 1]} ${paz.getFullYear()}`;
+
+      // Bu haftadaki menüleri tara
+      const buHaftaVerilenler = {};
+      for (let d = new Date(pzt); d <= paz; d.setDate(d.getDate() + 1)) {
+        const k = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+        const m = menuler[k];
+        if (m) {
+          const gunAdi = GUN_ISIMLERI[d.getDay() === 0 ? 7 : d.getDay()];
+          const tYazi = `${d.getDate()} ${AY_ISIMLERI[d.getMonth() + 1]} ${gunAdi}`;
+          [ { ad: 'Sabah', txt: m.sabah }, { ad: 'Öğle', txt: m.oglen }, { ad: 'Akşam', txt: m.aksam } ].forEach(o => {
+            gidalariAyir(o.txt).forEach(g => {
+              const key = kucukHarf(g);
+              if (!buHaftaVerilenler[key]) buHaftaVerilenler[key] = [];
+              buHaftaVerilenler[key].push(`${tYazi} (${o.ad})`);
+            });
+          });
+        }
+      }
+
+      const listeDiv = document.getElementById('gidaListesiAlani');
+      listeDiv.innerHTML = '';
+
+      gidaListesi.forEach((gida, idx) => {
+        const k = kucukHarf(gida);
+        const verildiMi = !!buHaftaVerilenler[k];
+        const detay = verildiMi ? `Bu hafta verildi: ${buHaftaVerilenler[k].join(', ')}` : 'Bu hafta henüz verilmedi';
+
+        if (aktifFiltre === 1 && !verildiMi) return;
+        if (aktifFiltre === 2 && verildiMi) return;
+
+        listeDiv.innerHTML += `
+          <div class="bg-white p-3 rounded-xl border ${verildiMi ? 'border-green-300' : 'border-gray-200'} flex justify-between items-center shadow-sm">
+            <div>
+              <div class="font-bold text-gray-800 text-sm">${gida}</div>
+              <div class="text-xs ${verildiMi ? 'text-green-700' : 'text-gray-500'} mt-0.5">${detay}</div>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="text-xs font-bold px-2.5 py-1 rounded-md ${verildiMi ? 'bg-green-100 text-green-800 border border-green-300' : 'bg-red-50 text-red-700 border border-red-200'}">
+                ${verildiMi ? '✅ Bu Hafta Verildi' : '❌ Bu Hafta Verilmedi'}
+              </span>
+              <button onclick="gidaSil(${idx})" class="text-gray-300 hover:text-red-500 p-1 text-sm font-bold">&times;</button>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    function gidaSil(idx) {
+      gidaListesi.splice(idx, 1);
+      kaydetLocal();
+      gidaListesiniCiz();
+    }
+
+    function filtrele(f) {
+      aktifFiltre = f;
+      [0, 1, 2].forEach(i => {
+        const btn = document.getElementById(`fBtn${i}`);
+        if (i === f) {
+          btn.className = 'flex-1 py-1.5 text-xs font-bold rounded-lg bg-green-700 text-white shadow-sm';
+        } else {
+          btn.className = 'flex-1 py-1.5 text-xs font-bold rounded-lg bg-gray-200 text-gray-700';
+        }
+      });
+      gidaListesiniCiz();
+    }
+
+    // SEKME DEĞİŞTİRME
+    function sekmeDegistir(s) {
+      if (s === 0) {
+        document.getElementById('tabTakvim').classList.remove('hidden');
+        document.getElementById('tabGidalar').classList.add('hidden');
+        document.getElementById('headerTitle').innerText = '🗓️ Bebek Beslenme Takvimi';
+        document.getElementById('navBtn0').className = 'flex flex-col items-center text-green-700 font-bold text-xs';
+        document.getElementById('navBtn1').className = 'flex flex-col items-center text-gray-400 font-bold text-xs';
+        takvimiCiz();
+      } else {
+        document.getElementById('tabTakvim').classList.add('hidden');
+        document.getElementById('tabGidalar').classList.remove('hidden');
+        document.getElementById('headerTitle').innerText = '📋 Canlı Hafta Gıda Takibi';
+        document.getElementById('navBtn0').className = 'flex flex-col items-center text-gray-400 font-bold text-xs';
+        document.getElementById('navBtn1').className = 'flex flex-col items-center text-green-700 font-bold text-xs';
+        gidaListesiniCiz();
+      }
+    }
+
+    // Başlat
+    takvimiCiz();
+  </script>
+</body>
+</html>
