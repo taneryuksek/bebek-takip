@@ -16,6 +16,15 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body { -webkit-tap-highlight-color: transparent; }
+    .clamp-1 {
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    /* Yatay kaydırma çubuğunu gizleme */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 </head>
 <body class="bg-gray-100 font-sans pb-20 select-none text-gray-800">
@@ -36,7 +45,7 @@
 
   <!-- 1. SEKME: TAKVİM & AJANDA EKRANI -->
   <main id="tabTakvim" class="block">
-    <!-- Ay Seçici & Görünüm Değiştirici (Takvim / Liste) -->
+    <!-- Ay Seçici & Görünüm Değiştirici -->
     <div class="bg-white px-3 py-2 border-b space-y-2">
       <div class="flex justify-between items-center">
         <button onclick="oncekiAy()" class="px-3 py-1 text-gray-600 hover:text-green-700 text-xl font-bold active:scale-95 transition">‹</button>
@@ -44,7 +53,7 @@
         <button onclick="sonrakiAy()" class="px-3 py-1 text-gray-600 hover:text-green-700 text-xl font-bold active:scale-95 transition">›</button>
       </div>
 
-      <!-- ÇÖZÜM 3 TOGGLE: TAKVİM vs AJANDA LİSTE -->
+      <!-- GÖRÜNÜM MODU (Takvim vs Liste) -->
       <div class="flex bg-gray-100 p-0.5 rounded-lg border border-gray-200 text-xs font-bold">
         <button onclick="gorunumModuDegistir('takvim')" id="btnModTakvim" class="flex-1 py-1.5 rounded-md bg-white text-green-800 shadow-sm flex items-center justify-center gap-1 transition">
           <span>📅</span> <span>Takvim Modu</span>
@@ -55,42 +64,59 @@
       </div>
     </div>
 
-    <!-- GÖRÜNÜM A: KOMPAKT NOKTALI TAKVİM + SEÇİLİ GÜN DETAYI -->
+    <!-- GÖRÜNÜM A: DİNAMİK PARMAKLA BÜYÜTÜLEBİLİR TAKVİM -->
     <div id="alanTakvimModu" class="block">
-      <!-- Lejant -->
-      <div class="bg-gray-50 border-b border-gray-200 px-2 py-1 flex justify-around text-[10px] font-bold text-gray-600">
-        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-400 inline-block"></span> Sabah</span>
-        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span> Öğle</span>
-        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-sky-500 inline-block"></span> Akşam</span>
-        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-purple-600 inline-block"></span> ✨ Yeni</span>
-      </div>
-
-      <!-- Gün İsimleri -->
-      <div class="grid grid-cols-7 bg-white text-center py-1 text-[11px] font-bold text-gray-400 border-b">
-        <div>Pzt</div><div>Sal</div><div>Çar</div><div>Per</div><div>Cum</div><div>Cmt</div><div>Paz</div>
-      </div>
-
-      <!-- 7 Sütunlu Kompakt Grid -->
-      <div id="takvimGrid" class="grid grid-cols-7 gap-[2px] bg-gray-200 p-[2px]"></div>
-
-      <!-- SEÇİLİ GÜNÜN DETAY KARTI (TAKVİMİN HEMEN ALTINDA FERAH VE RAHAT OKUNUR) -->
-      <div class="p-3">
-        <div id="seciliGunKarti" class="bg-white rounded-2xl p-4 shadow-sm border border-gray-200 space-y-3">
-          <!-- Dinamik doldurulacak -->
+      <!-- Yakınlaştırma (Zoom) Bilgi ve Kontrol Çubuğu -->
+      <div class="bg-gray-50 border-b border-gray-200 px-3 py-1.5 flex justify-between items-center text-xs">
+        <!-- Lejant -->
+        <div id="lejantAlani" class="flex items-center gap-2 text-[10px] font-bold text-gray-600">
+          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-400 inline-block"></span> Sabah</span>
+          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span> Öğle</span>
+          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-sky-500 inline-block"></span> Akşam</span>
         </div>
+
+        <!-- Büyütme Butonları & İki Parmak İpucu -->
+        <div class="flex items-center gap-1.5 bg-white border border-gray-200 rounded-lg px-2 py-0.5 shadow-sm">
+          <span class="text-[10px] font-bold text-gray-400 mr-1 hidden sm:inline">✌️ İki parmakla büyüt</span>
+          <button onclick="zoomDegistir(-0.25)" class="text-sm font-extrabold text-gray-600 hover:text-green-700 px-1 active:scale-95">-</button>
+          <span id="zoomYuzdeYazi" onclick="zoomSifirla()" title="Sıfırlamak için dokunun" class="text-[11px] font-bold text-green-800 cursor-pointer px-1">%100</span>
+          <button onclick="zoomDegistir(0.25)" class="text-sm font-extrabold text-gray-600 hover:text-green-700 px-1 active:scale-95">+</button>
+        </div>
+      </div>
+
+      <!-- Büyütülünce Sağa-Sola Kaydırılabilir Alan (Pinch-to-zoom Container) -->
+      <div id="takvimScrollContainer" class="overflow-x-auto no-scrollbar relative touch-pan-x touch-pan-y">
+        <div id="takvimGenislikSarmalayici" class="min-w-full transition-all duration-150">
+          <!-- Gün İsimleri -->
+          <div class="grid grid-cols-7 bg-white text-center py-1 text-[11px] font-bold text-gray-400 border-b">
+            <div>Pzt</div><div>Sal</div><div>Çar</div><div>Per</div><div>Cum</div><div>Cmt</div><div>Paz</div>
+          </div>
+
+          <!-- 7 Sütunlu Grid -->
+          <div id="takvimGrid" class="grid grid-cols-7 gap-[2px] bg-gray-200 p-[2px]"></div>
+        </div>
+      </div>
+
+      <!-- Yakınlaştırma İpucu Bildirimi -->
+      <div id="zoomKaydirmaIpucu" class="hidden text-center text-[10px] text-gray-500 bg-gray-100 py-1 border-b flex items-center justify-center gap-1">
+        <span>↔️ Sağa sola kaydırarak günleri inceleyebilirsiniz</span>
+        <button onclick="zoomSifirla()" class="text-green-700 font-bold underline ml-1">Sıfırla</button>
+      </div>
+
+      <!-- SEÇİLİ GÜNÜN DETAY KARTI -->
+      <div class="p-3">
+        <div id="seciliGunKarti" class="bg-white rounded-2xl p-4 shadow-sm border border-gray-200 space-y-3"></div>
       </div>
     </div>
 
-    <!-- GÖRÜNÜM B: AYIN TÜM GÜNLERİNİ AŞAĞI KAYDIRARAK LİSTELEYEN AJANDA MODU -->
+    <!-- GÖRÜNÜM B: AJANDA / LİSTE MODU -->
     <div id="alanListeModu" class="hidden p-3 space-y-2">
-      <!-- Gün gün kartlar buraya çizilir -->
       <div id="listeModuIcerik" class="space-y-2"></div>
     </div>
   </main>
 
   <!-- 2. SEKME: GIDA TAKİBİ & MANUEL EKLEME -->
   <main id="tabGidalar" class="hidden p-3 space-y-3">
-    <!-- Canlı Hafta Bilgi Kartı -->
     <div class="bg-white p-3 rounded-xl border border-gray-200 shadow-sm">
       <div class="flex items-center space-x-1.5 text-red-600 font-bold text-xs">
         <span class="inline-block w-2 h-2 rounded-full bg-red-600 animate-pulse"></span>
@@ -100,7 +126,6 @@
       <p class="text-[11px] text-gray-500 mt-0.5">Listedeki tüm besinler bu 7 güne göre otomatik kontrol edilir.</p>
     </div>
 
-    <!-- Manuel Gıda Ekleme Alanı -->
     <div class="bg-white p-2.5 rounded-xl border border-gray-200 shadow-sm flex gap-2">
       <input type="text" id="inYeniGida" placeholder="Listeye yeni besin ekle (ör. Tarhana)..." class="flex-1 text-xs border border-gray-300 rounded-lg px-2.5 py-2 outline-none focus:ring-2 focus:ring-green-600">
       <button onclick="manuelGidaEkle()" class="bg-green-700 hover:bg-green-800 text-white font-bold text-xs px-3.5 py-2 rounded-lg shadow-sm active:scale-95 transition">
@@ -108,14 +133,12 @@
       </button>
     </div>
 
-    <!-- Filtreleme Butonları -->
     <div class="flex space-x-2">
       <button onclick="filtrele(0)" id="fBtn0" class="flex-1 py-1.5 text-xs font-bold rounded-lg bg-green-700 text-white shadow-sm">Tümü (<span id="sayiTumu">0</span>)</button>
       <button onclick="filtrele(1)" id="fBtn1" class="flex-1 py-1.5 text-xs font-bold rounded-lg bg-gray-200 text-gray-700">✅ Verilen (<span id="sayiVerilen">0</span>)</button>
       <button onclick="filtrele(2)" id="fBtn2" class="flex-1 py-1.5 text-xs font-bold rounded-lg bg-gray-200 text-gray-700">❌ Verilmeyen (<span id="sayiVerilmeyen">0</span>)</button>
     </div>
 
-    <!-- Besin Listesi -->
     <div id="gidaListesiAlani" class="space-y-1.5"></div>
   </main>
 
@@ -232,10 +255,13 @@
 
     let bugun = new Date();
     let aktifAy = new Date(bugun.getFullYear(), bugun.getMonth(), 1);
-    let seciliTarih = new Date(bugun); // Takvimde seçili gün
+    let seciliTarih = new Date(bugun);
     let seciliTarihKey = '';
     let aktifFiltre = 0;
-    let aktifGorunumModu = 'takvim'; // 'takvim' veya 'liste'
+    let aktifGorunumModu = 'takvim';
+
+    // DİNAMİK YAKINLAŞTIRMA (ZOOM) DEĞİŞKENLERİ
+    let zoomOrani = 1.0; // 1.0 = %100, 1.5 = %150, 2.0 = %200
 
     let menuler = JSON.parse(localStorage.getItem('bebek_menuler_v2') || '{}');
     let gidaListesi = JSON.parse(localStorage.getItem('bebek_gida_v2') || 'null');
@@ -323,7 +349,6 @@
       };
     }
 
-    // GÖRÜNÜM MODU DEĞİŞTİR (Takvim vs Liste)
     function gorunumModuDegistir(mod) {
       aktifGorunumModu = mod;
       if (mod === 'takvim') {
@@ -341,7 +366,36 @@
       }
     }
 
-    // 1. TAKVİM MODU ÇİZİMİ (Noktalı Grid + Seçili Gün Detayı)
+    // ==========================================
+    // DİNAMİK YAKINLAŞTIRMA (ZOOM MOTORU)
+    // ==========================================
+    function zoomDegistir(fark) {
+      zoomUygula(zoomOrani + fark);
+    }
+
+    function zoomSifirla() {
+      zoomUygula(1.0);
+    }
+
+    function zoomUygula(yeniOran) {
+      zoomOrani = Math.min(Math.max(yeniOran, 1.0), 2.2); // %100 ile %220 arası sınır
+      document.getElementById('zoomYuzdeYazi').innerText = `%${Math.round(zoomOrani * 100)}`;
+
+      const wrap = document.getElementById('takvimGenislikSarmalayici');
+      const ipucu = document.getElementById('zoomKaydirmaIpucu');
+
+      if (zoomOrani > 1.1) {
+        wrap.style.minWidth = `${Math.round(zoomOrani * 100)}%`;
+        ipucu.classList.remove('hidden');
+      } else {
+        wrap.style.minWidth = '100%';
+        ipucu.classList.add('hidden');
+      }
+
+      takvimiCiz();
+    }
+
+    // 1. TAKVİM ÇİZİMİ (Zoom Oranına Göre Nokta veya Gerçek Yazı Gösterir)
     function takvimiCiz() {
       const y = aktifAy.getFullYear();
       const m = aktifAy.getMonth();
@@ -355,8 +409,13 @@
       const grid = document.getElementById('takvimGrid');
       grid.innerHTML = '';
 
+      // Yakınlaştırılmış Modda mıyız? (%125 ve üzeri ise yazıları kutunun içinde göster!)
+      const buyutuldu = zoomOrani >= 1.25;
+
+      const hucreYukseklik = buyutuldu ? `${Math.round(75 * zoomOrani)}px` : '48px';
+
       for (let i = 0; i < bosluk; i++) {
-        grid.innerHTML += `<div class="bg-gray-100 h-12 sm:h-14"></div>`;
+        grid.innerHTML += `<div class="bg-gray-100" style="min-height: ${hucreYukseklik}"></div>`;
       }
 
       for (let g = 1; g <= toplamGun; g++) {
@@ -366,25 +425,40 @@
         const isBugun = bugun.getFullYear() === y && bugun.getMonth() === m && bugun.getDate() === g;
         const isSecili = seciliTarih.getFullYear() === y && seciliTarih.getMonth() === m && seciliTarih.getDate() === g;
         const yeniObj = gununYeniBesinleri(buTarih);
-        const yeniSayisi = yeniObj.sabah.length + yeniObj.oglen.length + yeniObj.aksam.length;
+        const tumYeniler = [...yeniObj.sabah, ...yeniObj.oglen, ...yeniObj.aksam];
 
-        // Öğün Noktaları
-        let noktalarHtml = '';
-        if (menu) {
-          if (menu.sabah) noktalarHtml += `<span class="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block"></span>`;
-          if (menu.oglen) noktalarHtml += `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>`;
-          if (menu.aksam) noktalarHtml += `<span class="w-1.5 h-1.5 rounded-full bg-sky-500 inline-block"></span>`;
-        }
-        if (yeniSayisi > 0) {
-          noktalarHtml += `<span class="w-1.5 h-1.5 rounded-full bg-purple-600 inline-block"></span>`;
+        let icerikHtml = '';
+
+        if (buyutuldu) {
+          // BÜYÜTÜLMÜŞ MOD: KUTUCUĞUN İÇİNDE YEMEKLERİN GERÇEK ADLARI YAZAR!
+          if (menu) {
+            if (menu.sabah) icerikHtml += `<div class="bg-amber-100/90 text-amber-950 text-[8.5px] font-semibold px-1 py-[1px] rounded clamp-1 leading-tight mb-[1px]" title="${menu.sabah}">${menu.sabah}</div>`;
+            if (menu.oglen) icerikHtml += `<div class="bg-emerald-100/90 text-emerald-950 text-[8.5px] font-semibold px-1 py-[1px] rounded clamp-1 leading-tight mb-[1px]" title="${menu.oglen}">${menu.oglen}</div>`;
+            if (menu.aksam) icerikHtml += `<div class="bg-sky-100/90 text-sky-950 text-[8.5px] font-semibold px-1 py-[1px] rounded clamp-1 leading-tight mb-[1px]" title="${menu.aksam}">${menu.aksam}</div>`;
+          }
+          if (tumYeniler.length) {
+            icerikHtml += `<div class="bg-purple-100 text-purple-950 text-[8px] font-bold px-1 py-[1px] rounded clamp-1 leading-tight border border-purple-200 mt-auto">✨ ${tumYeniler.join(',')}</div>`;
+          }
+        } else {
+          // NORMAL MOD: ŞIK RENKLİ NOKTALAR
+          let noktalar = '';
+          if (menu) {
+            if (menu.sabah) noktalar += `<span class="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block"></span>`;
+            if (menu.oglen) noktalar += `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>`;
+            if (menu.aksam) noktalar += `<span class="w-1.5 h-1.5 rounded-full bg-sky-500 inline-block"></span>`;
+          }
+          if (tumYeniler.length > 0) {
+            noktalar += `<span class="w-1.5 h-1.5 rounded-full bg-purple-600 inline-block"></span>`;
+          }
+          icerikHtml = `<div class="flex gap-0.5 items-center justify-center h-3 flex-wrap">${noktalar}</div>`;
         }
 
         grid.innerHTML += `
-          <div onclick="gunSec(${y}, ${m + 1}, ${g})" class="bg-white h-12 sm:h-14 p-1 rounded flex flex-col justify-between items-center cursor-pointer transition border ${isSecili ? 'border-2 border-green-700 bg-green-50' : (isBugun ? 'border-2 border-green-400 bg-green-50/40' : 'border-gray-100')} active:scale-95">
-            <span class="text-xs font-extrabold ${isBugun ? 'text-green-700' : (isSecili ? 'text-green-900' : 'text-gray-700')}">${g}</span>
-            <div class="flex gap-0.5 items-center justify-center h-3 flex-wrap">
-              ${noktalarHtml}
+          <div onclick="gunSec(${y}, ${m + 1}, ${g})" style="min-height: ${hucreYukseklik}" class="bg-white p-1 rounded flex flex-col justify-between cursor-pointer transition border ${isSecili ? 'border-2 border-green-700 bg-green-50' : (isBugun ? 'border-2 border-green-400 bg-green-50/40' : 'border-gray-100')} active:scale-95">
+            <div class="flex justify-between items-center mb-0.5">
+              <span class="text-[11px] font-extrabold ${isBugun ? 'text-green-700' : (isSecili ? 'text-green-900' : 'text-gray-700')}">${g}</span>
             </div>
+            <div class="w-full">${icerikHtml}</div>
           </div>
         `;
       }
@@ -392,13 +466,12 @@
       seciliGunDetayiniCiz();
     }
 
-    // Güne dokunulduğunda çalışır
     function gunSec(y, m, g) {
       seciliTarih = new Date(y, m - 1, g);
       takvimiCiz();
     }
 
-    // TAKVİMİN ALTINDAKİ BÜYÜK VE FERAH SEÇİLİ GÜN KARTI
+    // TAKVİMİN ALTINDAKİ DETAY KARTI
     function seciliGunDetayiniCiz() {
       const y = seciliTarih.getFullYear();
       const m = seciliTarih.getMonth();
@@ -444,7 +517,6 @@
         ${yeniBesinlerHtml}
 
         <div class="space-y-2">
-          <!-- Sabah -->
           <div class="p-2.5 rounded-xl border border-amber-200 bg-amber-50/60">
             <div class="text-xs font-bold text-amber-900 flex items-center gap-1 mb-1">
               <span class="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block"></span>
@@ -455,7 +527,6 @@
             </div>
           </div>
 
-          <!-- Öğle -->
           <div class="p-2.5 rounded-xl border border-emerald-200 bg-emerald-50/60">
             <div class="text-xs font-bold text-emerald-900 flex items-center gap-1 mb-1">
               <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>
@@ -466,7 +537,6 @@
             </div>
           </div>
 
-          <!-- Akşam -->
           <div class="p-2.5 rounded-xl border border-sky-200 bg-sky-50/60">
             <div class="text-xs font-bold text-sky-900 flex items-center gap-1 mb-1">
               <span class="w-2.5 h-2.5 rounded-full bg-sky-500 inline-block"></span>
@@ -480,7 +550,7 @@
       `;
     }
 
-    // 2. LİSTE / AJANDA MODU ÇİZİMİ (Tüm Ayı Alt Alta Kaydırma)
+    // AJANDA / LİSTE MODU
     function listeModunuCiz() {
       const y = aktifAy.getFullYear();
       const m = aktifAy.getMonth();
@@ -548,7 +618,6 @@
       if (aktifGorunumModu === 'takvim') takvimiCiz(); else listeModunuCiz();
     }
 
-    // MODAL İŞLEMLERİ
     function duzenleModalAc(y, m, g) {
       seciliTarihKey = `${y}-${m}-${g}`;
       const menu = menuler[seciliTarihKey] || { sabah: '', oglen: '', aksam: '' };
@@ -604,7 +673,6 @@
       gidaListesiniCiz();
     }
 
-    // MANUEL GIDA EKLEME
     function manuelGidaEkle() {
       const input = document.getElementById('inYeniGida');
       const deger = input.value.trim();
@@ -620,7 +688,6 @@
       input.value = '';
     }
 
-    // GIDA TAKİBİ LİSTESİ & CANLI HAFTA
     function gidaListesiniCiz() {
       const { pzt, paz } = buHaftaninAraligi();
       document.getElementById('haftaAraligiYazi').innerText = `📌 ${pzt.getDate()} ${AY_ISIMLERI[pzt.getMonth() + 1]} - ${paz.getDate()} ${AY_ISIMLERI[paz.getMonth() + 1]} ${paz.getFullYear()}`;
@@ -833,6 +900,56 @@
         alert("Geçersiz veri formatı! Lütfen tam metni kopyaladığınızdan emin olun.");
       }
     }
+
+    // ==========================================
+    // PARMAKLA YAKINLAŞTIRMA (PINCH GESTURE) DİNLENİYOR
+    // ==========================================
+    const scrollBox = document.getElementById('takvimScrollContainer');
+    let baslangicMesafe = 0;
+    let baslangicZoom = 1.0;
+    let sonTiklamaZamani = 0;
+
+    function parmakMesafesi(touches) {
+      const dx = touches[0].clientX - touches[1].clientX;
+      const dy = touches[0].clientY - touches[1].clientY;
+      return Math.hypot(dx, dy);
+    }
+
+    // İki parmakla kıstırma / açma (Pinch)
+    scrollBox.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 2) {
+        baslangicMesafe = parmakMesafesi(e.touches);
+        baslangicZoom = zoomOrani;
+      }
+    }, { passive: true });
+
+    scrollBox.addEventListener('touchmove', (e) => {
+      if (e.touches.length === 2 && baslangicMesafe > 0) {
+        const yeniMesafe = parmakMesafesi(e.touches);
+        const katsayi = yeniMesafe / baslangicMesafe;
+        zoomUygula(baslangicZoom * katsayi);
+      }
+    }, { passive: true });
+
+    scrollBox.addEventListener('touchend', (e) => {
+      if (e.touches.length < 2) {
+        baslangicMesafe = 0;
+      }
+    });
+
+    // Çift Dokunarak Büyütme/Küçültme (Double Tap)
+    scrollBox.addEventListener('click', (e) => {
+      const suan = Date.now();
+      if (suan - sonTiklamaZamani < 300) {
+        // Çift dokunma tespit edildi
+        if (zoomOrani > 1.1) {
+          zoomSifirla();
+        } else {
+          zoomUygula(1.5);
+        }
+      }
+      sonTiklamaZamani = suan;
+    });
 
     // Başlat
     takvimiCiz();
