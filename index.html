@@ -16,12 +16,6 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body { -webkit-tap-highlight-color: transparent; }
-    .clamp-1 {
-      display: -webkit-box;
-      -webkit-line-clamp: 1;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
   </style>
 </head>
 <body class="bg-gray-100 font-sans pb-20 select-none text-gray-800">
@@ -40,30 +34,58 @@
     </div>
   </header>
 
-  <!-- 1. SEKME: TAKVİM EKRANI -->
+  <!-- 1. SEKME: TAKVİM & AJANDA EKRANI -->
   <main id="tabTakvim" class="block">
-    <!-- Ay Değiştirici -->
-    <div class="bg-white px-3 py-1.5 border-b flex justify-between items-center">
-      <button onclick="oncekiAy()" class="px-3 py-1 text-gray-600 hover:text-green-700 text-xl font-bold active:scale-95 transition">‹</button>
-      <h2 id="ayYilBaslik" class="text-sm font-extrabold text-green-800 tracking-wide"></h2>
-      <button onclick="sonrakiAy()" class="px-3 py-1 text-gray-600 hover:text-green-700 text-xl font-bold active:scale-95 transition">›</button>
+    <!-- Ay Seçici & Görünüm Değiştirici (Takvim / Liste) -->
+    <div class="bg-white px-3 py-2 border-b space-y-2">
+      <div class="flex justify-between items-center">
+        <button onclick="oncekiAy()" class="px-3 py-1 text-gray-600 hover:text-green-700 text-xl font-bold active:scale-95 transition">‹</button>
+        <h2 id="ayYilBaslik" class="text-sm font-extrabold text-green-800 tracking-wide"></h2>
+        <button onclick="sonrakiAy()" class="px-3 py-1 text-gray-600 hover:text-green-700 text-xl font-bold active:scale-95 transition">›</button>
+      </div>
+
+      <!-- ÇÖZÜM 3 TOGGLE: TAKVİM vs AJANDA LİSTE -->
+      <div class="flex bg-gray-100 p-0.5 rounded-lg border border-gray-200 text-xs font-bold">
+        <button onclick="gorunumModuDegistir('takvim')" id="btnModTakvim" class="flex-1 py-1.5 rounded-md bg-white text-green-800 shadow-sm flex items-center justify-center gap-1 transition">
+          <span>📅</span> <span>Takvim Modu</span>
+        </button>
+        <button onclick="gorunumModuDegistir('liste')" id="btnModListe" class="flex-1 py-1.5 rounded-md text-gray-500 hover:text-gray-800 flex items-center justify-center gap-1 transition">
+          <span>📋</span> <span>Ajanda / Liste</span>
+        </button>
+      </div>
     </div>
 
-    <!-- Renk Lejantı -->
-    <div class="bg-gray-50 border-b border-gray-200 px-2 py-1 flex justify-around text-[10px] font-bold text-gray-600">
-      <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block"></span> Sabah</span>
-      <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> Öğle</span>
-      <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-sky-500 inline-block"></span> Akşam</span>
-      <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-purple-600 inline-block"></span> ✨ Yeni</span>
+    <!-- GÖRÜNÜM A: KOMPAKT NOKTALI TAKVİM + SEÇİLİ GÜN DETAYI -->
+    <div id="alanTakvimModu" class="block">
+      <!-- Lejant -->
+      <div class="bg-gray-50 border-b border-gray-200 px-2 py-1 flex justify-around text-[10px] font-bold text-gray-600">
+        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-400 inline-block"></span> Sabah</span>
+        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span> Öğle</span>
+        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-sky-500 inline-block"></span> Akşam</span>
+        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-purple-600 inline-block"></span> ✨ Yeni</span>
+      </div>
+
+      <!-- Gün İsimleri -->
+      <div class="grid grid-cols-7 bg-white text-center py-1 text-[11px] font-bold text-gray-400 border-b">
+        <div>Pzt</div><div>Sal</div><div>Çar</div><div>Per</div><div>Cum</div><div>Cmt</div><div>Paz</div>
+      </div>
+
+      <!-- 7 Sütunlu Kompakt Grid -->
+      <div id="takvimGrid" class="grid grid-cols-7 gap-[2px] bg-gray-200 p-[2px]"></div>
+
+      <!-- SEÇİLİ GÜNÜN DETAY KARTI (TAKVİMİN HEMEN ALTINDA FERAH VE RAHAT OKUNUR) -->
+      <div class="p-3">
+        <div id="seciliGunKarti" class="bg-white rounded-2xl p-4 shadow-sm border border-gray-200 space-y-3">
+          <!-- Dinamik doldurulacak -->
+        </div>
+      </div>
     </div>
 
-    <!-- Gün İsimleri -->
-    <div class="grid grid-cols-7 bg-white text-center py-1 text-[11px] font-bold text-gray-400 border-b">
-      <div>Pzt</div><div>Sal</div><div>Çar</div><div>Per</div><div>Cum</div><div>Cmt</div><div>Paz</div>
+    <!-- GÖRÜNÜM B: AYIN TÜM GÜNLERİNİ AŞAĞI KAYDIRARAK LİSTELEYEN AJANDA MODU -->
+    <div id="alanListeModu" class="hidden p-3 space-y-2">
+      <!-- Gün gün kartlar buraya çizilir -->
+      <div id="listeModuIcerik" class="space-y-2"></div>
     </div>
-
-    <!-- Takvim Grid -->
-    <div id="takvimGrid" class="grid grid-cols-7 gap-[2px] bg-gray-200 p-[2px]"></div>
   </main>
 
   <!-- 2. SEKME: GIDA TAKİBİ & MANUEL EKLEME -->
@@ -148,7 +170,6 @@
 
       <p class="text-xs text-gray-500">Verilerinizi güvenceye almak veya eşinizin telefonuna aktarmak için aşağıdaki seçenekleri kullanabilirsiniz.</p>
 
-      <!-- 1. Dosya Olarak İndir / Yükle -->
       <div class="space-y-2 bg-gray-50 p-3 rounded-xl border border-gray-200">
         <div class="text-xs font-bold text-gray-700">📁 Dosya ile Yedekleme</div>
         <div class="flex gap-2">
@@ -163,7 +184,6 @@
         </div>
       </div>
 
-      <!-- 2. WhatsApp / Metin Olarak Kopyala Yapıştır -->
       <div class="space-y-2 bg-purple-50 p-3 rounded-xl border border-purple-200">
         <div class="text-xs font-bold text-purple-900">📲 WhatsApp / Hızlı Aktarım</div>
         <div class="flex gap-2">
@@ -176,7 +196,6 @@
         </div>
       </div>
 
-      <!-- Metin Yapıştırma Alanı (Gizli Başlar) -->
       <div id="metinYukleAlani" class="hidden space-y-2 pt-1">
         <textarea id="inYedekMetin" rows="3" placeholder="Kopyaladığınız yedek kodunu buraya yapıştırın..." class="w-full text-xs border border-purple-300 rounded-lg p-2 font-mono outline-none focus:ring-2 focus:ring-purple-600"></textarea>
         <button onclick="metinleGeriYukle()" class="w-full bg-purple-800 text-white font-bold text-xs py-2 rounded-lg">
@@ -213,8 +232,10 @@
 
     let bugun = new Date();
     let aktifAy = new Date(bugun.getFullYear(), bugun.getMonth(), 1);
+    let seciliTarih = new Date(bugun); // Takvimde seçili gün
     let seciliTarihKey = '';
     let aktifFiltre = 0;
+    let aktifGorunumModu = 'takvim'; // 'takvim' veya 'liste'
 
     let menuler = JSON.parse(localStorage.getItem('bebek_menuler_v2') || '{}');
     let gidaListesi = JSON.parse(localStorage.getItem('bebek_gida_v2') || 'null');
@@ -302,6 +323,25 @@
       };
     }
 
+    // GÖRÜNÜM MODU DEĞİŞTİR (Takvim vs Liste)
+    function gorunumModuDegistir(mod) {
+      aktifGorunumModu = mod;
+      if (mod === 'takvim') {
+        document.getElementById('alanTakvimModu').classList.remove('hidden');
+        document.getElementById('alanListeModu').classList.add('hidden');
+        document.getElementById('btnModTakvim').className = 'flex-1 py-1.5 rounded-md bg-white text-green-800 shadow-sm flex items-center justify-center gap-1 transition';
+        document.getElementById('btnModListe').className = 'flex-1 py-1.5 rounded-md text-gray-500 hover:text-gray-800 flex items-center justify-center gap-1 transition';
+        takvimiCiz();
+      } else {
+        document.getElementById('alanTakvimModu').classList.add('hidden');
+        document.getElementById('alanListeModu').classList.remove('hidden');
+        document.getElementById('btnModTakvim').className = 'flex-1 py-1.5 rounded-md text-gray-500 hover:text-gray-800 flex items-center justify-center gap-1 transition';
+        document.getElementById('btnModListe').className = 'flex-1 py-1.5 rounded-md bg-white text-green-800 shadow-sm flex items-center justify-center gap-1 transition';
+        listeModunuCiz();
+      }
+    }
+
+    // 1. TAKVİM MODU ÇİZİMİ (Noktalı Grid + Seçili Gün Detayı)
     function takvimiCiz() {
       const y = aktifAy.getFullYear();
       const m = aktifAy.getMonth();
@@ -316,7 +356,7 @@
       grid.innerHTML = '';
 
       for (let i = 0; i < bosluk; i++) {
-        grid.innerHTML += `<div class="bg-gray-100 min-h-[72px] sm:min-h-[85px]"></div>`;
+        grid.innerHTML += `<div class="bg-gray-100 h-12 sm:h-14"></div>`;
       }
 
       for (let g = 1; g <= toplamGun; g++) {
@@ -324,45 +364,192 @@
         const k = `${y}-${m + 1}-${g}`;
         const menu = menuler[k];
         const isBugun = bugun.getFullYear() === y && bugun.getMonth() === m && bugun.getDate() === g;
+        const isSecili = seciliTarih.getFullYear() === y && seciliTarih.getMonth() === m && seciliTarih.getDate() === g;
         const yeniObj = gununYeniBesinleri(buTarih);
+        const yeniSayisi = yeniObj.sabah.length + yeniObj.oglen.length + yeniObj.aksam.length;
 
-        let icerikHtml = '';
+        // Öğün Noktaları
+        let noktalarHtml = '';
         if (menu) {
-          if (menu.sabah) {
-            icerikHtml += `<div class="bg-amber-100/90 text-amber-950 text-[9px] font-semibold px-1 py-[1px] rounded clamp-1 leading-tight mb-[2px]" title="${menu.sabah}">${menu.sabah}</div>`;
-          }
-          if (menu.oglen) {
-            icerikHtml += `<div class="bg-emerald-100/90 text-emerald-950 text-[9px] font-semibold px-1 py-[1px] rounded clamp-1 leading-tight mb-[2px]" title="${menu.oglen}">${menu.oglen}</div>`;
-          }
-          if (menu.aksam) {
-            icerikHtml += `<div class="bg-sky-100/90 text-sky-950 text-[9px] font-semibold px-1 py-[1px] rounded clamp-1 leading-tight mb-[2px]" title="${menu.aksam}">${menu.aksam}</div>`;
-          }
+          if (menu.sabah) noktalarHtml += `<span class="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block"></span>`;
+          if (menu.oglen) noktalarHtml += `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>`;
+          if (menu.aksam) noktalarHtml += `<span class="w-1.5 h-1.5 rounded-full bg-sky-500 inline-block"></span>`;
         }
-
-        const tumYeni = [...yeniObj.sabah, ...yeniObj.oglen, ...yeniObj.aksam];
-        let yeniHtml = '';
-        if (tumYeni.length) {
-          yeniHtml = `<div class="bg-purple-100 text-purple-950 font-bold text-[8.5px] px-1 py-[1px] rounded clamp-1 leading-tight border border-purple-200 mt-auto" title="Yeni: ${tumYeni.join(',')}">✨ ${tumYeni.join(',')}</div>`;
+        if (yeniSayisi > 0) {
+          noktalarHtml += `<span class="w-1.5 h-1.5 rounded-full bg-purple-600 inline-block"></span>`;
         }
 
         grid.innerHTML += `
-          <div onclick="gunTikla(${y}, ${m + 1}, ${g})" class="bg-white min-h-[76px] sm:min-h-[88px] p-1 rounded flex flex-col justify-between cursor-pointer border ${isBugun ? 'border-2 border-green-600 bg-green-50/30' : 'border-gray-100'} active:bg-gray-50 transition">
-            <div>
-              <div class="flex justify-between items-center mb-0.5">
-                <span class="text-[11px] font-extrabold ${isBugun ? 'text-green-700 bg-green-100 px-1 rounded-full' : 'text-gray-700'}">${g}</span>
-              </div>
-              <div>${icerikHtml}</div>
+          <div onclick="gunSec(${y}, ${m + 1}, ${g})" class="bg-white h-12 sm:h-14 p-1 rounded flex flex-col justify-between items-center cursor-pointer transition border ${isSecili ? 'border-2 border-green-700 bg-green-50' : (isBugun ? 'border-2 border-green-400 bg-green-50/40' : 'border-gray-100')} active:scale-95">
+            <span class="text-xs font-extrabold ${isBugun ? 'text-green-700' : (isSecili ? 'text-green-900' : 'text-gray-700')}">${g}</span>
+            <div class="flex gap-0.5 items-center justify-center h-3 flex-wrap">
+              ${noktalarHtml}
             </div>
-            <div>${yeniHtml}</div>
+          </div>
+        `;
+      }
+
+      seciliGunDetayiniCiz();
+    }
+
+    // Güne dokunulduğunda çalışır
+    function gunSec(y, m, g) {
+      seciliTarih = new Date(y, m - 1, g);
+      takvimiCiz();
+    }
+
+    // TAKVİMİN ALTINDAKİ BÜYÜK VE FERAH SEÇİLİ GÜN KARTI
+    function seciliGunDetayiniCiz() {
+      const y = seciliTarih.getFullYear();
+      const m = seciliTarih.getMonth();
+      const g = seciliTarih.getDate();
+      const dayOfWeek = GUN_ISIMLERI[seciliTarih.getDay() === 0 ? 7 : seciliTarih.getDay()];
+      const k = `${y}-${m + 1}-${g}`;
+      const menu = menuler[k] || { sabah: '', oglen: '', aksam: '' };
+      const isBugun = bugun.getFullYear() === y && bugun.getMonth() === m && bugun.getDate() === g;
+      const yeniObj = gununYeniBesinleri(seciliTarih);
+
+      const container = document.getElementById('seciliGunKarti');
+
+      let yeniBesinlerHtml = '';
+      const tumYeniler = [];
+      if (yeniObj.sabah.length) tumYeniler.push(`Sabah: ${yeniObj.sabah.join(', ')}`);
+      if (yeniObj.oglen.length) tumYeniler.push(`Öğle: ${yeniObj.oglen.join(', ')}`);
+      if (yeniObj.aksam.length) tumYeniler.push(`Akşam: ${yeniObj.aksam.join(', ')}`);
+
+      if (tumYeniler.length) {
+        yeniBesinlerHtml = `
+          <div class="bg-purple-50 border border-purple-200 rounded-xl p-2.5 space-y-1">
+            <div class="text-xs font-bold text-purple-900 flex items-center gap-1">✨ Bu Gün İlk Kez Denenenler:</div>
+            <div class="text-xs text-purple-800">${tumYeniler.join(' • ')}</div>
+          </div>
+        `;
+      }
+
+      container.innerHTML = `
+        <div class="flex justify-between items-center border-b pb-2">
+          <div>
+            <div class="text-sm font-extrabold text-gray-800 flex items-center gap-1.5">
+              <span>📅</span> <span>${g} ${AY_ISIMLERI[m + 1]} ${y}</span>
+              <span class="text-xs font-bold text-gray-400">(${dayOfWeek})</span>
+              ${isBugun ? '<span class="text-[10px] bg-green-700 text-white font-bold px-1.5 py-0.5 rounded-full">Bugün</span>' : ''}
+            </div>
+            <div class="text-[11px] text-gray-500 mt-0.5">Günün Menü Detayı</div>
+          </div>
+          <button onclick="duzenleModalAc(${y}, ${m + 1}, ${g})" class="bg-green-700 hover:bg-green-800 active:scale-95 text-white font-bold text-xs px-3 py-1.5 rounded-lg shadow-sm flex items-center gap-1 transition">
+            <span>✍️</span> <span>Düzenle</span>
+          </button>
+        </div>
+
+        ${yeniBesinlerHtml}
+
+        <div class="space-y-2">
+          <!-- Sabah -->
+          <div class="p-2.5 rounded-xl border border-amber-200 bg-amber-50/60">
+            <div class="text-xs font-bold text-amber-900 flex items-center gap-1 mb-1">
+              <span class="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block"></span>
+              <span>🍳 Sabah Kahvaltısı</span>
+            </div>
+            <div class="text-xs ${menu.sabah ? 'text-gray-800 font-medium' : 'text-gray-400 italic'}">
+              ${menu.sabah || 'Menü girilmedi'}
+            </div>
+          </div>
+
+          <!-- Öğle -->
+          <div class="p-2.5 rounded-xl border border-emerald-200 bg-emerald-50/60">
+            <div class="text-xs font-bold text-emerald-900 flex items-center gap-1 mb-1">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>
+              <span>🥣 Öğle Yemeği</span>
+            </div>
+            <div class="text-xs ${menu.oglen ? 'text-gray-800 font-medium' : 'text-gray-400 italic'}">
+              ${menu.oglen || 'Menü girilmedi'}
+            </div>
+          </div>
+
+          <!-- Akşam -->
+          <div class="p-2.5 rounded-xl border border-sky-200 bg-sky-50/60">
+            <div class="text-xs font-bold text-sky-900 flex items-center gap-1 mb-1">
+              <span class="w-2.5 h-2.5 rounded-full bg-sky-500 inline-block"></span>
+              <span>🥑 Akşam Yemeği</span>
+            </div>
+            <div class="text-xs ${menu.aksam ? 'text-gray-800 font-medium' : 'text-gray-400 italic'}">
+              ${menu.aksam || 'Menü girilmedi'}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // 2. LİSTE / AJANDA MODU ÇİZİMİ (Tüm Ayı Alt Alta Kaydırma)
+    function listeModunuCiz() {
+      const y = aktifAy.getFullYear();
+      const m = aktifAy.getMonth();
+      const toplamGun = new Date(y, m + 1, 0).getDate();
+      const listeDiv = document.getElementById('listeModuIcerik');
+      listeDiv.innerHTML = '';
+
+      for (let g = 1; g <= toplamGun; g++) {
+        const buTarih = new Date(y, m, g);
+        const dayOfWeek = GUN_ISIMLERI[buTarih.getDay() === 0 ? 7 : buTarih.getDay()];
+        const k = `${y}-${m + 1}-${g}`;
+        const menu = menuler[k];
+        const isBugun = bugun.getFullYear() === y && bugun.getMonth() === m && bugun.getDate() === g;
+        const yeniObj = gununYeniBesinleri(buTarih);
+        const doluMu = menu && (menu.sabah || menu.oglen || menu.aksam);
+
+        let yeniRozetHtml = '';
+        const tumYeniler = [...yeniObj.sabah, ...yeniObj.oglen, ...yeniObj.aksam];
+        if (tumYeniler.length) {
+          yeniRozetHtml = `
+            <div class="mt-2 text-[11px] font-bold text-purple-900 bg-purple-50 border border-purple-200 px-2 py-1 rounded-lg">
+              ✨ Yeni: ${tumYeniler.join(', ')}
+            </div>
+          `;
+        }
+
+        listeDiv.innerHTML += `
+          <div onclick="duzenleModalAc(${y}, ${m + 1}, ${g})" class="bg-white p-3 rounded-2xl border ${isBugun ? 'border-2 border-green-600 bg-green-50/20 shadow-md' : 'border-gray-200'} shadow-sm cursor-pointer active:scale-[0.99] transition space-y-1.5">
+            <div class="flex justify-between items-center border-b pb-1.5">
+              <div class="text-xs font-extrabold text-gray-800 flex items-center gap-1.5">
+                <span>${g} ${AY_ISIMLERI[m + 1]} ${y}</span>
+                <span class="text-gray-400 font-bold">(${dayOfWeek})</span>
+                ${isBugun ? '<span class="text-[9px] bg-green-700 text-white font-bold px-1.5 py-0.5 rounded-full">Bugün</span>' : ''}
+              </div>
+              <span class="text-[11px] text-green-700 font-bold flex items-center gap-0.5">
+                <span>✍️</span> <span>${doluMu ? 'Düzenle' : '+ Menü Ekle'}</span>
+              </span>
+            </div>
+
+            ${doluMu ? `
+              <div class="space-y-1 text-xs pt-0.5">
+                ${menu.sabah ? `<div class="flex items-start gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-400 mt-1 flex-shrink-0"></span> <span class="font-bold text-amber-950">Sabah:</span> <span class="text-gray-800">${menu.sabah}</span></div>` : ''}
+                ${menu.oglen ? `<div class="flex items-start gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-500 mt-1 flex-shrink-0"></span> <span class="font-bold text-emerald-950">Öğle:</span> <span class="text-gray-800">${menu.oglen}</span></div>` : ''}
+                ${menu.aksam ? `<div class="flex items-start gap-1.5"><span class="w-2 h-2 rounded-full bg-sky-500 mt-1 flex-shrink-0"></span> <span class="font-bold text-sky-950">Akşam:</span> <span class="text-gray-800">${menu.aksam}</span></div>` : ''}
+              </div>
+            ` : `
+              <div class="text-xs text-gray-400 italic py-0.5">Menü girilmedi, eklemek için dokunun...</div>
+            `}
+
+            ${yeniRozetHtml}
           </div>
         `;
       }
     }
 
-    function oncekiAy() { aktifAy.setMonth(aktifAy.getMonth() - 1); takvimiCiz(); }
-    function sonrakiAy() { aktifAy.setMonth(aktifAy.getMonth() + 1); takvimiCiz(); }
+    function oncekiAy() {
+      aktifAy.setMonth(aktifAy.getMonth() - 1);
+      seciliTarih = new Date(aktifAy.getFullYear(), aktifAy.getMonth(), 1);
+      if (aktifGorunumModu === 'takvim') takvimiCiz(); else listeModunuCiz();
+    }
 
-    function gunTikla(y, m, g) {
+    function sonrakiAy() {
+      aktifAy.setMonth(aktifAy.getMonth() + 1);
+      seciliTarih = new Date(aktifAy.getFullYear(), aktifAy.getMonth(), 1);
+      if (aktifGorunumModu === 'takvim') takvimiCiz(); else listeModunuCiz();
+    }
+
+    // MODAL İŞLEMLERİ
+    function duzenleModalAc(y, m, g) {
       seciliTarihKey = `${y}-${m}-${g}`;
       const menu = menuler[seciliTarihKey] || { sabah: '', oglen: '', aksam: '' };
 
@@ -413,10 +600,11 @@
 
       kaydetLocal();
       modalKapat();
-      takvimiCiz();
+      if (aktifGorunumModu === 'takvim') takvimiCiz(); else listeModunuCiz();
       gidaListesiniCiz();
     }
 
+    // MANUEL GIDA EKLEME
     function manuelGidaEkle() {
       const input = document.getElementById('inYeniGida');
       const deger = input.value.trim();
@@ -432,6 +620,7 @@
       input.value = '';
     }
 
+    // GIDA TAKİBİ LİSTESİ & CANLI HAFTA
     function gidaListesiniCiz() {
       const { pzt, paz } = buHaftaninAraligi();
       document.getElementById('haftaAraligiYazi').innerText = `📌 ${pzt.getDate()} ${AY_ISIMLERI[pzt.getMonth() + 1]} - ${paz.getDate()} ${AY_ISIMLERI[paz.getMonth() + 1]} ${paz.getFullYear()}`;
@@ -530,7 +719,7 @@
         document.getElementById('headerTitle').innerHTML = '<span>🗓️</span> <span>Beslenme Takvimi</span>';
         document.getElementById('navBtn0').className = 'flex flex-col items-center text-green-700 font-bold text-[11px]';
         document.getElementById('navBtn1').className = 'flex flex-col items-center text-gray-400 font-bold text-[11px]';
-        takvimiCiz();
+        if (aktifGorunumModu === 'takvim') takvimiCiz(); else listeModunuCiz();
       } else {
         document.getElementById('tabTakvim').classList.add('hidden');
         document.getElementById('tabGidalar').classList.remove('hidden');
@@ -541,9 +730,7 @@
       }
     }
 
-    // ==========================================
-    // YEDEKLEME VE GERİ YÜKLEME FONKSİYONLARI
-    // ==========================================
+    // YEDEKLEME & RESTORE
     function yedekModalAc() {
       document.getElementById('yedekModal').classList.remove('hidden');
       document.getElementById('metinYukleAlani').classList.add('hidden');
@@ -553,7 +740,6 @@
       document.getElementById('yedekModal').classList.add('hidden');
     }
 
-    // 1. JSON Dosyası Olarak İndir
     function yedekDosyaIndir() {
       const paket = {
         versiyon: "2.0",
@@ -567,14 +753,12 @@
       const a = document.createElement("a");
       const d = new Date();
       a.download = `bebek_ek_gida_yedek_${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}.json`;
-      a.href = url;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     }
 
-    // 2. JSON Dosyasından Yükle
     function yedekDosyaSecildi(e) {
       const file = e.target.files[0];
       if (!file) return;
@@ -591,7 +775,7 @@
             menuler = parsed.menuler;
             gidaListesi = parsed.gidaListesi;
             kaydetLocal();
-            takvimiCiz();
+            if (aktifGorunumModu === 'takvim') takvimiCiz(); else listeModunuCiz();
             gidaListesiniCiz();
             yedekModalKapat();
             alert("Yedek başarıyla yüklendi! 🎉");
@@ -601,10 +785,9 @@
         }
       };
       reader.readAsText(file);
-      e.target.value = ''; // Inputu sıfırla
+      e.target.value = '';
     }
 
-    // 3. Metin Olarak Panoya Kopyala (WhatsApp için)
     function yedekMetniKopyala() {
       const paket = {
         versiyon: "2.0",
@@ -614,19 +797,16 @@
       const jsonMetin = JSON.stringify(paket);
 
       navigator.clipboard.writeText(jsonMetin).then(() => {
-        alert("Yedek metni panoya kopyalandı! 📋\nŞimdi WhatsApp'a girip eşinize yapıştırarak gönderebilirsiniz.");
+        alert("Yedek metni panoya kopyalandı! 📋\nWhatsApp'a girip eşinize yapıştırarak gönderebilirsiniz.");
       }).catch(() => {
-        // Eski cihazlar için prompt alternatifi
         prompt("Yedek kodunuz aşağıdadır, kopyalayabilirsiniz:", jsonMetin);
       });
     }
 
-    // 4. Metin Alanını Aç
     function metinYukleModalGoster() {
       document.getElementById('metinYukleAlani').classList.toggle('hidden');
     }
 
-    // 5. Metinden Geri Yükle
     function metinleGeriYukle() {
       const metin = document.getElementById('inYedekMetin').value.trim();
       if (!metin) {
@@ -643,7 +823,7 @@
           menuler = parsed.menuler;
           gidaListesi = parsed.gidaListesi;
           kaydetLocal();
-          takvimiCiz();
+          if (aktifGorunumModu === 'takvim') takvimiCiz(); else listeModunuCiz();
           gidaListesiniCiz();
           yedekModalKapat();
           document.getElementById('inYedekMetin').value = '';
