@@ -27,11 +27,17 @@
 <body class="bg-gray-100 font-sans pb-20 select-none text-gray-800">
 
   <!-- ÜST BAŞLIK -->
-  <header class="bg-white border-b border-gray-200 sticky top-0 z-20 px-3 py-2.5 flex justify-between items-center shadow-sm">
+  <header class="bg-white border-b border-gray-200 sticky top-0 z-20 px-3 py-2 flex justify-between items-center shadow-sm">
     <h1 id="headerTitle" class="text-sm font-bold text-gray-800 flex items-center gap-1">
       <span>🗓️</span> <span>Beslenme Takvimi</span>
     </h1>
-    <span id="headerDate" class="text-[11px] bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded-full"></span>
+    <div class="flex items-center gap-1.5">
+      <span id="headerDate" class="text-[11px] bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded-full"></span>
+      <!-- YEDEKLEME BUTONU -->
+      <button onclick="yedekModalAc()" title="Yedekleme ve Ayarlar" class="bg-gray-100 hover:bg-gray-200 active:scale-95 text-gray-700 px-2 py-1 rounded-lg text-xs font-bold border border-gray-300 flex items-center gap-1 transition">
+        <span>⚙️</span> <span class="hidden sm:inline">Yedekle</span>
+      </button>
+    </div>
   </header>
 
   <!-- 1. SEKME: TAKVİM EKRANI -->
@@ -43,7 +49,7 @@
       <button onclick="sonrakiAy()" class="px-3 py-1 text-gray-600 hover:text-green-700 text-xl font-bold active:scale-95 transition">›</button>
     </div>
 
-    <!-- Renk Lejantı (Bilgi Çubuğu) -->
+    <!-- Renk Lejantı -->
     <div class="bg-gray-50 border-b border-gray-200 px-2 py-1 flex justify-around text-[10px] font-bold text-gray-600">
       <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block"></span> Sabah</span>
       <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> Öğle</span>
@@ -56,7 +62,7 @@
       <div>Pzt</div><div>Sal</div><div>Çar</div><div>Per</div><div>Cum</div><div>Cmt</div><div>Paz</div>
     </div>
 
-    <!-- Takvim Grid (Mobilde Sıfır Taşma, Kompakt Hücreler) -->
+    <!-- Takvim Grid -->
     <div id="takvimGrid" class="grid grid-cols-7 gap-[2px] bg-gray-200 p-[2px]"></div>
   </main>
 
@@ -91,7 +97,7 @@
     <div id="gidaListesiAlani" class="space-y-1.5"></div>
   </main>
 
-  <!-- GÜN DÜZENLEME PENCERESİ (MODAL) -->
+  <!-- GÜN DÜZENLEME MODALI -->
   <div id="editModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
     <div class="bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl p-4 space-y-3 max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center border-b pb-2">
@@ -99,13 +105,11 @@
         <button onclick="modalKapat()" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
       </div>
 
-      <!-- Yeni Besin Bilgi Kutusu -->
       <div id="modalYeniBesinAlani" class="hidden bg-purple-50 border border-purple-200 rounded-lg p-2.5 space-y-1">
         <div class="text-[11px] font-bold text-purple-900 flex items-center gap-1">✨ Bu Gün İlk Kez Denenen Yeni Besinler:</div>
         <div id="modalYeniBesinIcerik" class="text-xs text-purple-800 space-y-0.5"></div>
       </div>
 
-      <!-- Öğün Girişleri -->
       <div>
         <label class="block text-xs font-bold text-amber-900 mb-1 flex items-center gap-1">
           <span class="w-2 h-2 rounded-full bg-amber-400"></span> Sabah Kahvaltısı
@@ -132,6 +136,58 @@
     </div>
   </div>
 
+  <!-- YEDEKLEME VE GERİ YÜKLEME MODALI -->
+  <div id="yedekModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+    <div class="bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl p-5 space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 class="font-bold text-sm text-gray-800 flex items-center gap-1.5">
+          <span>⚙️</span> <span>Yedekleme & Eşitleme</span>
+        </h3>
+        <button onclick="yedekModalKapat()" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+      </div>
+
+      <p class="text-xs text-gray-500">Verilerinizi güvenceye almak veya eşinizin telefonuna aktarmak için aşağıdaki seçenekleri kullanabilirsiniz.</p>
+
+      <!-- 1. Dosya Olarak İndir / Yükle -->
+      <div class="space-y-2 bg-gray-50 p-3 rounded-xl border border-gray-200">
+        <div class="text-xs font-bold text-gray-700">📁 Dosya ile Yedekleme</div>
+        <div class="flex gap-2">
+          <button onclick="yedekDosyaIndir()" class="flex-1 bg-green-700 hover:bg-green-800 text-white font-bold text-xs py-2 px-3 rounded-lg flex items-center justify-center gap-1 shadow-sm active:scale-95 transition">
+            <span>📥</span> <span>Yedeği İndir</span>
+          </button>
+          
+          <input type="file" id="dosyaSecici" accept=".json,application/json" onchange="yedekDosyaSecildi(event)" class="hidden">
+          <button onclick="document.getElementById('dosyaSecici').click()" class="flex-1 bg-white hover:bg-gray-100 text-gray-700 font-bold text-xs py-2 px-3 rounded-lg border border-gray-300 flex items-center justify-center gap-1 shadow-sm active:scale-95 transition">
+            <span>📤</span> <span>Yedek Yükle</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- 2. WhatsApp / Metin Olarak Kopyala Yapıştır -->
+      <div class="space-y-2 bg-purple-50 p-3 rounded-xl border border-purple-200">
+        <div class="text-xs font-bold text-purple-900">📲 WhatsApp / Hızlı Aktarım</div>
+        <div class="flex gap-2">
+          <button onclick="yedekMetniKopyala()" class="flex-1 bg-purple-700 hover:bg-purple-800 text-white font-bold text-xs py-2 px-3 rounded-lg flex items-center justify-center gap-1 shadow-sm active:scale-95 transition">
+            <span>📋</span> <span>Metni Kopyala</span>
+          </button>
+          <button onclick="metinYukleModalGoster()" class="flex-1 bg-white hover:bg-purple-100 text-purple-900 font-bold text-xs py-2 px-3 rounded-lg border border-purple-300 flex items-center justify-center gap-1 shadow-sm active:scale-95 transition">
+            <span>📥</span> <span>Metin Yapıştır</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Metin Yapıştırma Alanı (Gizli Başlar) -->
+      <div id="metinYukleAlani" class="hidden space-y-2 pt-1">
+        <textarea id="inYedekMetin" rows="3" placeholder="Kopyaladığınız yedek kodunu buraya yapıştırın..." class="w-full text-xs border border-purple-300 rounded-lg p-2 font-mono outline-none focus:ring-2 focus:ring-purple-600"></textarea>
+        <button onclick="metinleGeriYukle()" class="w-full bg-purple-800 text-white font-bold text-xs py-2 rounded-lg">
+          Onayla ve Yükle
+        </button>
+      </div>
+
+      <button onclick="yedekModalKapat()" class="w-full py-2 text-xs text-gray-600 bg-gray-100 rounded-lg font-bold">Kapat</button>
+    </div>
+  </div>
+
   <!-- ALT MENÜ (NAVBAR) -->
   <nav class="fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 flex justify-around py-2 z-30 shadow-lg">
     <button onclick="sekmeDegistir(0)" id="navBtn0" class="flex flex-col items-center text-green-700 font-bold text-[11px]">
@@ -146,7 +202,6 @@
     const AY_ISIMLERI = ['', 'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
     const GUN_ISIMLERI = ['', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
 
-    // KULLANICININ VERDİĞİ TAM 32 BESİNLİK LİSTE
     const VARSAYILAN_LISTE = [
       "Armut", "Avokado", "Brokoli", "Ceviz", "Domates", "Elma", "Havuç", "Ispanak",
       "İrmik", "Kabak", "Kapya biber", "Karnabahar", "Kırmızı mercimek", "Kuzu kıyma",
@@ -161,7 +216,6 @@
     let seciliTarihKey = '';
     let aktifFiltre = 0;
 
-    // LocalStorage Yönetimi (Listenin eksiksiz yüklenmesi sağlanır)
     let menuler = JSON.parse(localStorage.getItem('bebek_menuler_v2') || '{}');
     let gidaListesi = JSON.parse(localStorage.getItem('bebek_gida_v2') || 'null');
 
@@ -184,13 +238,11 @@
       return str.split(/[,+/\n\-]/).map(s => s.trim()).filter(s => s.length >= 2);
     }
 
-    // Gelişmiş Besin Eşleştirici (Örn: "Yumurta sarısı" girilince "Yumurta / Yumurta sarısı"nı bulur)
     function besinEslesiyorMu(anaGida, arananGida) {
       const ana = kucukHarf(anaGida);
       const aranan = kucukHarf(arananGida);
       if (ana === aranan) return true;
 
-      // Parantez ve slash parçalarını çıkarıp bak
       const anaParcalar = ana.split(/[/(),]/).map(s => s.trim()).filter(Boolean);
       for (let p of anaParcalar) {
         if (p === aranan || aranan.includes(p) || p.includes(aranan)) return true;
@@ -208,7 +260,6 @@
       return { pzt, paz };
     }
 
-    // BİR GÜNDE İLK KEZ VERİLENLERİ BULAN MOTOR
     function gununYeniBesinleri(hedefTarih) {
       const hedefKey = `${hedefTarih.getFullYear()}-${hedefTarih.getMonth() + 1}-${hedefTarih.getDate()}`;
       const menu = menuler[hedefKey];
@@ -216,7 +267,6 @@
 
       const gecmisHavuz = new Set();
 
-      // Hedef günden ÖNCEKİ günleri topla
       Object.keys(menuler).forEach(k => {
         const [y, m, d] = k.split('-').map(Number);
         const t = new Date(y, m - 1, d);
@@ -252,7 +302,6 @@
       };
     }
 
-    // TAKVİMİ ÇİZ (S: Ö: A: Yazısız, Renk Rozetli ve Mobilde Taşmayan Tasarım)
     function takvimiCiz() {
       const y = aktifAy.getFullYear();
       const m = aktifAy.getMonth();
@@ -279,21 +328,17 @@
 
         let icerikHtml = '';
         if (menu) {
-          // Sabah (Sarı)
           if (menu.sabah) {
             icerikHtml += `<div class="bg-amber-100/90 text-amber-950 text-[9px] font-semibold px-1 py-[1px] rounded clamp-1 leading-tight mb-[2px]" title="${menu.sabah}">${menu.sabah}</div>`;
           }
-          // Öğle (Yeşil)
           if (menu.oglen) {
             icerikHtml += `<div class="bg-emerald-100/90 text-emerald-950 text-[9px] font-semibold px-1 py-[1px] rounded clamp-1 leading-tight mb-[2px]" title="${menu.oglen}">${menu.oglen}</div>`;
           }
-          // Akşam (Mavi)
           if (menu.aksam) {
             icerikHtml += `<div class="bg-sky-100/90 text-sky-950 text-[9px] font-semibold px-1 py-[1px] rounded clamp-1 leading-tight mb-[2px]" title="${menu.aksam}">${menu.aksam}</div>`;
           }
         }
 
-        // Yeni Besin Rozeti (Mor)
         const tumYeni = [...yeniObj.sabah, ...yeniObj.oglen, ...yeniObj.aksam];
         let yeniHtml = '';
         if (tumYeni.length) {
@@ -317,7 +362,6 @@
     function oncekiAy() { aktifAy.setMonth(aktifAy.getMonth() - 1); takvimiCiz(); }
     function sonrakiAy() { aktifAy.setMonth(aktifAy.getMonth() + 1); takvimiCiz(); }
 
-    // GÜN TIKLAMA VE DÜZENLEME
     function gunTikla(y, m, g) {
       seciliTarihKey = `${y}-${m}-${g}`;
       const menu = menuler[seciliTarihKey] || { sabah: '', oglen: '', aksam: '' };
@@ -357,7 +401,6 @@
 
       menuler[seciliTarihKey] = { sabah: s, oglen: o, aksam: a };
 
-      // Menüye yazılan yeni besinleri gıda listesine de ekle
       [s, o, a].forEach(text => {
         gidalariAyir(text).forEach(g => {
           let varMi = gidaListesi.some(item => besinEslesiyorMu(item, g));
@@ -374,7 +417,6 @@
       gidaListesiniCiz();
     }
 
-    // MANUEL GIDA EKLEME
     function manuelGidaEkle() {
       const input = document.getElementById('inYeniGida');
       const deger = input.value.trim();
@@ -390,12 +432,10 @@
       input.value = '';
     }
 
-    // GIDA TAKİBİ LİSTESİ & CANLI HAFTA
     function gidaListesiniCiz() {
       const { pzt, paz } = buHaftaninAraligi();
       document.getElementById('haftaAraligiYazi').innerText = `📌 ${pzt.getDate()} ${AY_ISIMLERI[pzt.getMonth() + 1]} - ${paz.getDate()} ${AY_ISIMLERI[paz.getMonth() + 1]} ${paz.getFullYear()}`;
 
-      // Bu haftadaki menüleri topla
       const buHaftaVerilenler = {};
       for (let d = new Date(pzt); d <= paz; d.setDate(d.getDate() + 1)) {
         const k = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
@@ -416,7 +456,6 @@
       let verilenSayac = 0;
       let verilmeyenSayac = 0;
 
-      // Sayıları hesapla
       gidaListesi.forEach(gida => {
         let verildi = false;
         for (let k in buHaftaVerilenler) {
@@ -484,7 +523,6 @@
       gidaListesiniCiz();
     }
 
-    // SEKME GEÇİŞİ
     function sekmeDegistir(s) {
       if (s === 0) {
         document.getElementById('tabTakvim').classList.remove('hidden');
@@ -500,6 +538,119 @@
         document.getElementById('navBtn0').className = 'flex flex-col items-center text-gray-400 font-bold text-[11px]';
         document.getElementById('navBtn1').className = 'flex flex-col items-center text-green-700 font-bold text-[11px]';
         gidaListesiniCiz();
+      }
+    }
+
+    // ==========================================
+    // YEDEKLEME VE GERİ YÜKLEME FONKSİYONLARI
+    // ==========================================
+    function yedekModalAc() {
+      document.getElementById('yedekModal').classList.remove('hidden');
+      document.getElementById('metinYukleAlani').classList.add('hidden');
+    }
+
+    function yedekModalKapat() {
+      document.getElementById('yedekModal').classList.add('hidden');
+    }
+
+    // 1. JSON Dosyası Olarak İndir
+    function yedekDosyaIndir() {
+      const paket = {
+        versiyon: "2.0",
+        olusturulmaTarihi: new Date().toISOString(),
+        menuler: menuler,
+        gidaListesi: gidaListesi
+      };
+
+      const blob = new Blob([JSON.stringify(paket, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const d = new Date();
+      a.download = `bebek_ek_gida_yedek_${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}.json`;
+      a.href = url;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // 2. JSON Dosyasından Yükle
+    function yedekDosyaSecildi(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        try {
+          const parsed = JSON.parse(evt.target.result);
+          if (!parsed.menuler || !parsed.gidaListesi) {
+            alert("Hata: Geçersiz yedek dosyası!");
+            return;
+          }
+          if (confirm("Bu yedek dosyası yüklenecek ve mevcut verileriniz güncellenecek. Onaylıyor musunuz?")) {
+            menuler = parsed.menuler;
+            gidaListesi = parsed.gidaListesi;
+            kaydetLocal();
+            takvimiCiz();
+            gidaListesiniCiz();
+            yedekModalKapat();
+            alert("Yedek başarıyla yüklendi! 🎉");
+          }
+        } catch (err) {
+          alert("Dosya okunamadı: " + err.message);
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = ''; // Inputu sıfırla
+    }
+
+    // 3. Metin Olarak Panoya Kopyala (WhatsApp için)
+    function yedekMetniKopyala() {
+      const paket = {
+        versiyon: "2.0",
+        menuler: menuler,
+        gidaListesi: gidaListesi
+      };
+      const jsonMetin = JSON.stringify(paket);
+
+      navigator.clipboard.writeText(jsonMetin).then(() => {
+        alert("Yedek metni panoya kopyalandı! 📋\nŞimdi WhatsApp'a girip eşinize yapıştırarak gönderebilirsiniz.");
+      }).catch(() => {
+        // Eski cihazlar için prompt alternatifi
+        prompt("Yedek kodunuz aşağıdadır, kopyalayabilirsiniz:", jsonMetin);
+      });
+    }
+
+    // 4. Metin Alanını Aç
+    function metinYukleModalGoster() {
+      document.getElementById('metinYukleAlani').classList.toggle('hidden');
+    }
+
+    // 5. Metinden Geri Yükle
+    function metinleGeriYukle() {
+      const metin = document.getElementById('inYedekMetin').value.trim();
+      if (!metin) {
+        alert("Lütfen bir yedek kodu yapıştırın.");
+        return;
+      }
+      try {
+        const parsed = JSON.parse(metin);
+        if (!parsed.menuler || !parsed.gidaListesi) {
+          alert("Hata: Geçersiz veya eksik yedek metni!");
+          return;
+        }
+        if (confirm("Yedek metnindeki veriler yüklenecek. Onaylıyor musunuz?")) {
+          menuler = parsed.menuler;
+          gidaListesi = parsed.gidaListesi;
+          kaydetLocal();
+          takvimiCiz();
+          gidaListesiniCiz();
+          yedekModalKapat();
+          document.getElementById('inYedekMetin').value = '';
+          alert("Yedek başarıyla yüklendi! 🎉");
+        }
+      } catch (err) {
+        alert("Geçersiz veri formatı! Lütfen tam metni kopyaladığınızdan emin olun.");
       }
     }
 
